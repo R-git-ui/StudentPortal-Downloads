@@ -13,7 +13,7 @@
 
 <br>
 
-### 🎓 A complete student portal built for real schools — web, Android & iOS
+### 🎓 A complete Student Portal built for Students — web, Android & iOS
 
 <br>
 
