@@ -13,7 +13,7 @@
 
 <br>
 
-### 🎓 A complete Student Portal built for Students — web, Android & iOS
+### 🎓 A complete student portal built for real schools — web, Android & iOS
 
 <br>
 
@@ -39,7 +39,7 @@
 
 **Quick Navigation**
 
-[🌍 Platforms](#-platforms) · [✨ Features](#-features) · [🏗️ Architecture](#️-architecture) · [🔒 Security](#-security) · [📂 Structure](#-folder-structure) · [🗄️ Database](#️-database-tables) · [⚙️ Local Setup](#️-local-setup) · [☁️ Deploy](#️-deploying-live) · [📦 Releases](#-releasing-a-new-version) · [🧰 Libraries](#-libraries-used) · [🤔 FAQ](#-faq)
+[🌍 Platforms](#-platforms) · [✨ Features](#-features) · [🏗️ Architecture](#️-architecture) · [🔒 Security](#-security) · [📂 Structure](#-folder-structure) · [🗄️ Database](#️-database-tables) · [⚙️ Local Setup](#️-local-setup) · [☁️ Deploy](#️-deploying-live) · [📦 Releases](#-releasing-a-new-version) · [🕵️ Analysis](#️-detailed-project-analysis--engineering-mechanics) · [🧰 Libraries](#-libraries-used) · [🤔 FAQ](#-faq)
 
 </div>
 
@@ -51,7 +51,6 @@ Built once, runs everywhere — same codebase, three platforms.
 
 | | Platform | How it works |
 |---|---|---|
-| 🌐 | **Website** | Hosted on Vercel. Works in any browser like a normal website. |
 | 📱 | **Android App** | Packaged into a signed `.apk` using Capacitor. Auto-built on every release. |
 | 🍎 | **iPhone / iPad** | Install via Safari → "Add to Home Screen". Runs as a PWA. |
 
@@ -65,13 +64,14 @@ Built once, runs everywhere — same codebase, three platforms.
 <br>
 
 - **Register & wait for approval** — no one gets in without an admin saying yes first
+- **Secure Authentication** — receive OTPs and password reset links securely via email (SMTP)
 - **Dashboard** — see your subjects, latest announcements, and how many unread notifications you have
 - **Browse subjects** — see everything you're enrolled in for the current semester
 - **Download materials** — access lecture notes, slides, and assignments uploaded by your instructor
 - **Secure file viewer** — encrypted files open inside a protected in-browser viewer. No download button, no right-click, no Ctrl+P
 - **Push notifications** — get notified on your phone or PC the moment you're approved, or when a new file or announcement goes up
 - **Profile & devices** — update your name, see which devices are logged into your account right now
-- **Support** — message the admin directly from inside the app
+- **Support** — message the admin directly from inside the app (integrated with Resend for email replies)
 - **Works offline** — the app shell loads from cache even without internet
 
 </details>
@@ -88,7 +88,7 @@ Built once, runs everywhere — same codebase, three platforms.
 - **Post announcements** that show up on every student's dashboard
 - **Broadcast push notifications** to all users instantly (or filter by tags)
 - **Tag students** into groups like "Batch A" or "Group 3" for targeted messages
-- **Support inbox** — read and respond to student messages
+- **Support inbox** — read and respond to student messages (responses sent via Resend API)
 - **Analytics** — charts showing user growth, logins, and activity over time
 - **Health monitor** — database stats, service status, cleanup jobs
 - **Security dashboard (SOC)** — live feed of blocked IPs, suspicious requests, and every audit log entry
@@ -107,12 +107,12 @@ Here's how everything is connected:
 ```
 ┌────────────────────────────────────────────────────────┐
 │                  USER'S DEVICE                         │
-│   Browser  /  Android APK  /  iPhone PWA              │
+│          Android APK  /  iPhone PWA                    │
 └───────────────────────┬────────────────────────────────┘
                         │  HTTPS
                         ▼
 ┌────────────────────────────────────────────────────────┐
-│             VERCEL  (Next.js 15 Frontend)              │
+│             VERCEL  (Next.js 15 PWA)                   │
 │                                                        │
 │   ┌─────────────────┐      ┌──────────────────────┐   │
 │   │  Edge Middleware │      │   App Router + SWR   │   │
@@ -170,6 +170,7 @@ Every layer of the app has security built in — not bolted on.
 | 🖼️ **Secure canvas viewer** | Encrypted files render in a canvas — no download, no print, no screenshot copy |
 | 📜 **Audit logs** | Every login, approval, upload, and admin action is saved permanently |
 | 🔴 **Emergency lockdown** | One button that wipes all sessions and freezes the site instantly |
+| 📧 **Email Verification** | Secure OTPs for registration and password resets delivered via SMTP |
 | 🔔 **Push auth** | Device tokens only bind to accounts after login — pending users get approval alerts only |
 
 ### How registration works
@@ -273,148 +274,39 @@ StudentWebsite/
 | `enrollments` | Which student is in which subject (many-to-many) |
 | `ratings` | Student ratings on subjects |
 | `route_maps` | Admin-managed navigation links |
+| `system_tags` | Admin-created tags for grouping students |
+| `download_logs` | Tracks who downloaded which file and when |
+| `notification_status` | Tracks delivery and read state for broadcasts |
 
 ---
 
-## ⚙️ Local Setup
 
-You need **Python 3.10+**, **Node.js 18+**, and a **PostgreSQL** database.
-Free PostgreSQL: [Supabase](https://supabase.com/) · Free Redis: [Upstash](https://upstash.com/)
+## 🕵️ Detailed Project Analysis & Engineering Mechanics
 
-### Step 1 — Clone
+### 🛡️ Multi-Layer Security Architecture
+The platform implements defense-in-depth security to protect academic materials, user privacy, and prevent unauthorized scraping:
+- **Intrusion Detection System (IDS):** Backend middleware automatically scans every request (URL parameters, JSON payloads, headers) for malicious patterns such as SQL injection (SQLi) and cross-site scripting (XSS). Offenders are automatically IP-blocked and reported in real-time to the admin SOC (Security Operations Center) dashboard.
+- **Frontend Security Enforcer:** A strict client-side lock that acts as an anti-scraping measure. It actively detects DevTools desyncs, intercepts screenshot shortcuts (Print Screen, Windows Snipping Tool, Mac shortcuts), and disables context menus. Focus loss on secure routes immediately triggers a blurry lock screen to prevent background recording software from capturing content.
+- **System Guard (Global Gateway):** A centralized layout wrapper that intercepts every route transition in Next.js. It validates session state, device linkage, role-based access control (RBAC), and checks for global maintenance/lockdown flags before rendering the requested page.
+- **Device Fingerprinting:** Every login generates a unique hardware and browser fingerprint. User sessions are strictly tied to this identity, and the system enforces a strict device limit per account (e.g., maximum 2 devices). Suspicious login locations or third-party devices are rejected, and admins can selectively deregister individual devices.
 
-```bash
-git clone https://github.com/R-git-ui/StudentPortal.git
-cd StudentPortal
-```
+### 🔄 Hybrid Over-The-Air (OTA) Updates
+To bypass the friction of app store review cycles and ensure all students are running the latest version, the app utilizes a custom OTA update mechanism:
+- **Web App Delivery:** Instantly updated globally via standard Vercel edge deployments.
+- **Android APK Engine:** The custom `AppUpdater` component polls the backend for version manifests. If a hot-update is available, it pulls the new bundle directly into the app's writable `data/` directory. When the user clears their cache or data, the app gracefully falls back to the read-only APK base bundle, preventing bricking.
+- **Zero-Downtime Webhooks:** Deployment pipelines trigger an authenticated webhook to place the system into "Maintenance Mode", alerting active users with visible push alerts, then automatically pulling them back online when the deployment completes.
 
-### Step 2 — Backend
+### 📡 Multi-Channel Push Notification Delivery
+Notifications are delivered reliably across all devices to keep students informed of critical academic updates:
+- **Web Browsers (VAPID):** Handled via `pywebpush`, allowing delivery of native browser notifications on Windows, macOS, and standard mobile browsers without needing a native app.
+- **Android (FCM):** Delivered securely using `firebase-admin` via Google's Firebase Cloud Messaging, ensuring delivery even when the app is completely closed or running in the background.
+- **Background Dispatchers:** Both notification streams are managed in parallel by background worker tasks on the Flask backend, ensuring instant, non-blocking delivery to hundreds of students simultaneously.
 
-```bash
-cd backend
-
-# create a virtual environment
-python -m venv venv
-venv\Scripts\activate       # Windows
-source venv/bin/activate    # Mac / Linux
-
-pip install -r requirements.txt
-flask run
-```
-
-Create `backend/.env`:
-
-```env
-FLASK_ENV=development
-SECRET_KEY=put-any-long-random-string-here
-DATABASE_URL=postgresql://user:password@host:5432/yourdb
-
-# ── Admin account (auto-created on first boot) ──────────────
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=yourpassword
-ADMIN_EMAIL=admin@yourschool.com
-ADMIN_NAME=Administrator
-
-# ── Cloudinary ──────────────────────────────────────────────
-CLOUDINARY_CLOUD_NAME=your_cloud
-CLOUDINARY_API_KEY=your_key
-CLOUDINARY_API_SECRET=your_secret
-
-# ── Push notifications ──────────────────────────────────────
-VAPID_PRIVATE_KEY=your_vapid_private_key
-VAPID_PUBLIC_KEY=your_vapid_public_key
-VAPID_CLAIM_EMAIL=mailto:admin@yourschool.com
-
-# ── Redis (optional — falls back to memory if not set) ──────
-RATELIMIT_STORAGE_URI=redis://localhost:6379
-
-# ── CORS ────────────────────────────────────────────────────
-ALLOWED_ORIGINS=http://localhost:3000
-```
-
-### Step 3 — Frontend
-
-```bash
-cd frontend
-npm install
-echo "NEXT_PUBLIC_API_URL=http://localhost:5000" > .env.local
-npm run dev
-```
-
-Open `http://localhost:3000`. Keep the backend running in a separate terminal.
-
-> **First login:** The admin account is created automatically on first boot using your `ADMIN_*` values from `.env`. Just log in with those credentials and you're in.
-
----
-
-## ☁️ Deploying Live
-
-### Backend → Render
-
-1. Go to [render.com](https://render.com) → New Web Service → connect your repo
-2. Set root directory: `backend`
-3. Build command: `pip install -r requirements.txt`
-4. Start command:
-```
-gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --worker-connections 1000 --timeout 120 --bind 0.0.0.0:$PORT app:app
-```
-5. Add all your `.env` variables in Render's **Environment** tab
-6. Hit Deploy — admin account is created automatically on first boot ✅
-
-### Frontend → Vercel
-
-1. Go to [vercel.com](https://vercel.com) → New Project → import this repo
-2. Root directory: `frontend`
-3. Add env variable: `NEXT_PUBLIC_API_URL` = your Render backend URL
-4. Deploy — every push to `main` auto-redeploys ✅
-
----
-
-## 📦 Releasing a New Version
-
-Everything is automated. Just run:
-
-```bash
-node release.js v1.2.0
-```
-
-That's it. Here's what happens automatically:
-
-```
-release.js runs
-  ├─ Updates version.txt and .env.production
-  ├─ Commits everything and pushes to main
-  │     └─ Vercel detects the push → redeploys frontend automatically
-  └─ Creates and pushes git tag "v1.2.0"
-        └─ GitHub Actions detects the tag → starts the build pipeline
-```
-
-### GitHub Actions pipeline (`.github/workflows/build-release.yml`)
-
-```
-1. 🔒  Puts site into Maintenance Mode via webhook
-2. 📦  npm ci — installs all frontend dependencies  
-3. ⚡  Builds Next.js as a static export
-4. ☕  Sets up Java 17 for Android toolchain
-5. 🤖  npx cap sync android — copies web build into Capacitor
-6. 🔑  Decodes .jks keystore from GitHub Secrets (base64)
-7. 🔨  ./gradlew assembleRelease — builds the signed APK
-8. 🏷️  Creates a GitHub Release with the APK attached
-9. 🔓  Takes site out of Maintenance Mode
-```
-
-### GitHub Secrets needed
-
-| Secret | What it is |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Your Render backend URL |
-| `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` | hCaptcha site key (optional) |
-| `ANDROID_KEYSTORE_BASE64` | Your `.jks` keystore file as base64 |
-| `ANDROID_KEYSTORE_ALIAS` | Alias inside the keystore |
-| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
-| `ANDROID_KEY_PASSWORD` | Key password |
-| `PUBLIC_REPO_TOKEN` | GitHub token with write access to the downloads repo |
-| `SYSTEM_WEBHOOK_SECRET` | Secret for the maintenance mode webhook |
+### ⚡ Real-Time Socket Architecture
+The platform leverages WebSockets to keep the UI perfectly synchronized without requiring manual refreshes:
+- **Live SOC Feed:** Admins watching the Security Operations Center page see threat blocks and IP bans populate instantly via dedicated socket namespaces.
+- **Dynamic Presence:** The directory page utilizes active socket connections to determine which students are currently online, displaying a live green indicator next to active users.
+- **Instant State Invalidation:** When a student is approved or a new announcement is posted, the backend emits a socket event that instructs connected clients to invalidate their SWR cache, causing the UI to seamlessly fetch the new data in the background.
 
 ---
 
@@ -445,6 +337,10 @@ release.js runs
 | **bcrypt** | Hashes passwords before storing them |
 | **tenacity** | Retries failed operations automatically |
 | **bleach** | Strips dangerous HTML to prevent XSS |
+| **resend** | Sending support emails to admins and students |
+| **smtplib** | Built-in Python library for sending OTPs and password resets via SMTP |
+| **SQLAlchemy** | Core SQL toolkit and ORM |
+| **Flask-Cors** | Handles Cross-Origin Resource Sharing |
 | **gevent + psycogreen** | Async I/O for handling many connections at once |
 
 </details>
@@ -461,9 +357,14 @@ release.js runs
 | **SWR** | Smart data fetching with background refresh and caching |
 | **Socket.IO client** | Connects to the backend WebSocket for real-time updates |
 | **Capacitor** | Wraps the web app into a native Android APK |
+| **Custom sw.js** | Native service worker for aggressive offline caching and PWA installs |
+| **hCaptcha** | Privacy-respecting bot protection on auth routes |
 | **Lucide React** | Clean and consistent icon set |
 | **Recharts** | Charts used in analytics and the SOC page |
 | **Sonner** | Toast/popup notifications |
+| **Framer Motion** | Complex UI animations |
+| **React Hook Form + Zod** | Form validation and state management |
+| **Capacitor Updater** | Handles Over-The-Air (OTA) updates |
 
 </details>
 
@@ -475,7 +376,7 @@ release.js runs
 ```
 You open a page
   → Vercel edge checks for attack signatures (blocks bad ones instantly)
-  → Next.js loads in your browser
+  → Next.js loads in the app shell
   → SWR fetches data from Flask on Render
   → Flask checks your session cookie, rate-limits the IP, scans the request
   → Queries PostgreSQL through Supavisor
@@ -487,7 +388,7 @@ You open a page
 You're on a page → Socket.IO connects in the background
   → Something happens server-side (approval, new post, blocked IP)
   → Flask emits a socket event
-  → Your browser receives it and updates the UI — no page refresh needed
+  → The app receives it and updates the UI — no page refresh needed
 ```
 
 ---
@@ -508,14 +409,13 @@ You're on a page → Socket.IO connects in the background
 | 10 | **Broadcast** | Send a push notification to every user right now |
 | 11 | **Upload Vault** | Upload assignments with watermark/encryption options |
 | 12 | **Tags** | Create labels to group students for targeted broadcasts |
-| 13 | **Messages** | Student support inbox |
-| 14 | **Analytics** | Signup trends, login counts, active user charts |
-| 15 | **SOC** | Live security threat feed — blocked IPs, suspicious requests |
-| 16 | **Security** | Full audit log, IP blocklist, lockdown toggle |
-| 17 | **Health** | Database size, service status, cleanup tools |
-| 18 | **Storage** | Cloudinary usage, orphan file scanner, purge tools |
-| 19 | **Settings** | General system configuration |
-| 20 | **Vault** | Encrypted file manager |
+| 13 | **Analytics** | Signup trends, login counts, active user charts |
+| 14 | **SOC** | Live security threat feed — blocked IPs, suspicious requests |
+| 15 | **Security** | Full audit log, IP blocklist, lockdown toggle |
+| 16 | **Health** | Database size, service status, cleanup tools |
+| 17 | **Storage** | Cloudinary usage, orphan file scanner, purge tools |
+| 18 | **Settings** | General system configuration |
+| 19 | **Vault** | Encrypted file manager |
 
 ---
 
@@ -549,14 +449,6 @@ Not really. Only 2 devices can be logged in at a time. A 3rd login is blocked. A
 <details>
 <summary><b>Does it work offline?</b></summary>
 The app shell and previously visited pages load from the service worker cache. Anything that needs live data (downloading files, seeing new notifications) still needs an internet connection.
-</details>
-
-<details>
-<summary><b>How do I generate VAPID keys for push notifications?</b></summary>
-
-```bash
-python -c "from py_vapid import Vapid; v = Vapid(); v.generate_keys(); print('Private:', v.private_key); print('Public:', v.public_key)"
-```
 </details>
 
 ---
