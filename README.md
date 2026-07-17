@@ -39,7 +39,7 @@
 
 **Quick Navigation**
 
-[🌍 Platforms](#-platforms) · [✨ Features](#-features) · [🏗️ Architecture](#️-architecture) · [🔒 Security](#-security) · [📂 Structure](#-folder-structure) · [🗄️ Database](#️-database-tables) · [⚙️ Local Setup](#️-local-setup) · [☁️ Deploy](#️-deploying-live) · [📦 Releases](#-releasing-a-new-version) · [🕵️ Analysis](#️-detailed-project-analysis--engineering-mechanics) · [🧰 Libraries](#-libraries-used) · [🤔 FAQ](#-faq)
+[🌍 Platforms](#-platforms) · [✨ Features](#-features) · [🏗️ Architecture](#️-architecture) · [🔒 Security](#-security) · [📂 Structure](#-folder-structure) · [🗄️ Database](#️-database-tables) · [🕵️ Analysis](#️-detailed-project-analysis--engineering-mechanics) · [🧰 Libraries](#-libraries-used) · [🤔 FAQ](#-faq)
 
 </div>
 
