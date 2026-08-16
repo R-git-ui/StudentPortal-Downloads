@@ -114,31 +114,31 @@ Here's how everything is connected:
 ┌────────────────────────────────────────────────────────┐
 │             VERCEL  (Next.js 15 PWA)                   │
 │                                                        │
-│   ┌─────────────────┐      ┌──────────────────────┐   │
-│   │  Edge Middleware │      │   App Router + SWR   │   │
-│   │  (blocks probes) │      │  (pages + caching)   │   │
-│   └─────────────────┘      └──────────────────────┘   │
+│   ┌─────────────────┐      ┌──────────────────────┐    │
+│   │ Edge Middleware │      │   App Router + SWR   │    │
+│   │ (blocks probes) │      │  (pages + caching)   │    │
+│   └─────────────────┘      └──────────────────────┘    │
 └──────────────────────────┬─────────────────────────────┘
                            │  REST API + WebSocket
                            ▼
 ┌────────────────────────────────────────────────────────┐
 │             RENDER  (Flask 3.1 + Gunicorn)             │
 │                                                        │
-│  ┌────────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ Flask Login│  │SocketIO  │  │  Thread Pool     │  │
-│  │  Sessions  │  │Real-time │  │  (async logging) │  │
-│  └────────────┘  └──────────┘  └──────────────────┘  │
-│  ┌────────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │Rate Limiter│  │ Talisman │  │  IDS Scanner     │  │
-│  │  (Redis)   │  │ CSP/HSTS │  │  (blocks attacks)│  │
-│  └────────────┘  └──────────┘  └──────────────────┘  │
-└──────┬──────────────────┬─────────────────────────────┘
-       │                  │
-  ┌────▼────┐   ┌─────────▼─────────┐   ┌────────────┐
-  │Supabase │   │    Cloudinary     │   │  Firebase  │
-  │PostgreSQL   │  (File Storage)   │   │  FCM Push  │
-  │(Pooled) │   │  + CDN Delivery   │   │  + VAPID   │
-  └─────────┘   └───────────────────┘   └────────────┘
+│  ┌────────────┐  ┌───────────┐  ┌──────────────────┐   │
+│  │ Flask Login│  │ SocketIO  │  │  Thread Pool     │   │
+│  │  Sessions  │  │ Real-time │  │  (async logging) │   │
+│  └────────────┘  └───────────┘  └──────────────────┘   │
+│  ┌────────────┐  ┌──────────┐  ┌──────────────────┐    │
+│  │Rate Limiter│  │ Talisman │  │  IDS Scanner     │    │
+│  │  (Redis)   │  │ CSP/HSTS │  │  (blocks attacks)│    │
+│  └────────────┘  └──────────┘  └──────────────────┘    │
+└───────┬───────────────────┬────────────────────────────┘
+        │                   │
+  ┌─────▼─────┐   ┌─────────▼─────────┐   ┌────────────┐
+  │ Supabase  │   │    Cloudinary     │   │  Firebase  │
+  │ PostgreSQL│   │  (File Storage)   │   │  FCM Push  │
+  │ (Pooled)  │   │  + CDN Delivery   │   │  + VAPID   │
+  └───────────┘   └───────────────────┘   └────────────┘
 ```
 
 **Why this setup?**
